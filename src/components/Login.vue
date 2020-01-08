@@ -2,7 +2,7 @@
     <div class="login-container">
         <div class="login-box">
             <div class="avatar_box">
-                <img src="../assets/logo.png">
+                <img src="../assets/img/logo.png">
             </div>
 
             <el-form label-width="0px" class="el-form" :model="loginForm" :rules="loginFormRules" ref="loginFormRef">
@@ -53,7 +53,6 @@
                 this.$refs.loginFormRef.validate(async valid => {
                     if (!valid) return;
                     let {data: res} = await this.$http.post('login', this.loginForm);
-                    console.log(res);
                     switch (res.meta.status) {
                         case 200:
                             this.$message.success('登陆成功');
