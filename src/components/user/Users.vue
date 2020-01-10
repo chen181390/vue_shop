@@ -44,8 +44,8 @@
                 </el-table-column>
                 <el-table-column label="操作">
                     <template v-slot="scope">
-                        <el-button type="primary" icon="el-icon-edit" size="mini"></el-button>
-                        <el-button type="danger" icon="el-icon-delete" size="mini"></el-button>
+                        <el-button type="primary" icon="el-icon-edit" size="mini" @click="modifyDlgOpen(scope.row.id)"></el-button>
+                        <el-button type="danger" icon="el-icon-delete" size="mini" @click="removeUserById(scope.row.id)"></el-button>
                         <el-tooltip class="item" effect="dark" content="分配角色" placement="top" :enterable="false">
                             <el-button type="warning" icon="el-icon-setting" size="mini"></el-button>
                         </el-tooltip>
@@ -67,9 +67,9 @@
         <el-dialog
                 title="添加用户"
                 :visible.sync="addDlgVis"
-                width="30%"
+                width="50%"
                 @close="addDlgClose">
-            <el-form ref="addFormRef" :model="addForm" :rules="addFormRules" label-width="70px">
+            <el-form ref="addFormRef" :model="addForm" :rules="formRules" label-width="70px">
                 <el-form-item label="用户名" prop="username">
                     <el-input v-model="addForm.username"></el-input>
                 </el-form-item>
@@ -86,6 +86,28 @@
             <span slot="footer" class="dialog-footer">
                 <el-button @click="addDlgVis = false">取 消</el-button>
                 <el-button type="primary" @click="addUser">确 定</el-button>
+            </span>
+        </el-dialog>
+
+        <el-dialog
+                title="修改用户信息"
+                :visible.sync="modifyDlgVis"
+                width="50%"
+                @close="modifyDlgClose">
+            <el-form ref="modifyFormRef" :model="modifyForm" :rules="formRules" label-width="70px">
+                <el-form-item label="用户名" prop="username">
+                    <el-input v-model="modifyForm.username" disabled></el-input>
+                </el-form-item>
+                <el-form-item label="邮箱" prop="email">
+                    <el-input v-model="modifyForm.email"></el-input>
+                </el-form-item>
+                <el-form-item label="手机" prop="mobile">
+                    <el-input v-model="modifyForm.mobile"></el-input>
+                </el-form-item>
+            </el-form>
+            <span slot="footer" class="dialog-footer">
+                <el-button @click="modifyDlgVis = false">取 消</el-button>
+                <el-button type="primary" @click="modifyUser">确 定</el-button>
             </span>
         </el-dialog>
     </div>
@@ -125,7 +147,7 @@
                     email: null,
                     mobile: null
                 },
-                addFormRules: {
+                formRules: {
                     username: [
                         {required: true, message: '请输入用户名', trigger: 'blur'},
                         {min: 3, max: 10, message: '用户名的长度在3~10个字符之间', trigger: 'blur'},
@@ -142,6 +164,12 @@
                         {required: true, message: '请输入手机号', trigger: 'blur'},
                         {validator: checkMobile, trigger: 'blur'}
                     ]
+                },
+                modifyDlgVis: false,
+                modifyForm: {
+                    username: null,
+                    email: null,
+                    mobile: null
                 }
             }
         },
@@ -184,6 +212,51 @@
                     this.addDlgVis = false;
                     this.getUserList();
                 });
+            },
+            async modifyDlgOpen(id) {
+                const {data: res} = await this.$http.get('users/' + id);
+                if (res.meta.status !== 200) {
+                    return this.$message.error('查询用户数据失败');
+                }
+                this.modifyForm = res.data;
+                this.modifyDlgVis = true;
+            },
+            modifyDlgClose() {
+                this.$refs.modifyFormRef.resetFields();
+            },
+            modifyUser() {
+                this.$refs.modifyFormRef.validate(async valid => {
+                    if (!valid) return;
+                    const {data: res} = await this.$http.put(`users/${this.modifyForm.id}`,
+                        {email: this.modifyForm.email, mobile: this.modifyForm.mobile});
+                    if (res.meta.status !== 200) {
+                        return this.$message.error(res.meta.msg);
+                    }
+                    this.getUserList();
+                    this.modifyDlgVis = false;
+                    this.$message.success('更新用户成功');
+                })
+            },
+            async removeUserById(id) {
+                const confirmResult = await this.$confirm('此操作将永久删除该用户，是否继续？', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).catch(error => error);
+
+                if (confirmResult !== 'confirm')
+                    return this.$message.info('已取消删除');
+
+                const {data: res} = await this.$http.delete('users/' + id);
+                if (res.meta.status !== 200) {
+                    return this.$message.error(res.meta.msg);
+                }
+                if (this.userlist.length === 1) {
+                    this.queryInfo.pagenum--;
+                    if (this.queryInfo.pagenum < 0)
+                        this.queryInfo.pagenum = 0;
+                }
+                this.getUserList();
             }
         },
         mounted() {

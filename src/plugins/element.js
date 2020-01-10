@@ -24,14 +24,14 @@ import {
     Switch,
     Tooltip,
     Pagination,
-    Dialog
+    Dialog,
+    MessageBox
 } from 'element-ui'
 
 Vue.use(Button);
 Vue.use(Form);
 Vue.use(FormItem);
 Vue.use(Input);
-Vue.prototype.$message = Message;
 Vue.use(Container);
 Vue.use(Header);
 Vue.use(Aside);
@@ -52,3 +52,5 @@ Vue.use(Switch);
 Vue.use(Tooltip);
 Vue.use(Pagination);
 Vue.use(Dialog);
+Vue.prototype.$confirm = MessageBox.confirm;
+Vue.prototype.$message = Message;
