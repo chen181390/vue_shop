@@ -1,10 +1,11 @@
-import Vue from 'vue'
-import App from './App.vue'
-import router from './router'
-import './assets/css/global.css'
-import './plugins/element'
-import axios from 'axios'
-import './assets/fonts/iconfont.css'
+import Vue from 'vue';
+import App from './App.vue';
+import router from './router';
+import './assets/css/global.css';
+import './plugins/element';
+import axios from 'axios';
+import './assets/fonts/iconfont.css';
+import TreeTable from 'vue-table-with-tree-grid';
 
 axios.defaults.baseURL = 'https://www.liulongbin.top:8888/api/private/v1/';
 axios.interceptors.request.use(config => {
@@ -13,6 +14,7 @@ axios.interceptors.request.use(config => {
 });
 Vue.prototype.$http = axios;
 Vue.config.productionTip = false;
+Vue.component('tree-table', TreeTable);
 
 new Vue({
   router,
