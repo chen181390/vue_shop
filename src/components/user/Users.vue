@@ -47,7 +47,7 @@
                         <el-button type="primary" icon="el-icon-edit" size="mini" @click="modifyDlgOpen(scope.row.id)"></el-button>
                         <el-button type="danger" icon="el-icon-delete" size="mini" @click="removeUserById(scope.row.id)"></el-button>
                         <el-tooltip class="item" effect="dark" content="分配角色" placement="top" :enterable="false">
-                            <el-button type="warning" icon="el-icon-setting" size="mini"></el-button>
+                            <el-button type="warning" icon="el-icon-setting" size="mini" @click="openAllotRoleDlg(scope.row)"></el-button>
                         </el-tooltip>
                     </template>
                 </el-table-column>
@@ -110,6 +110,28 @@
                 <el-button type="primary" @click="modifyUser">确 定</el-button>
             </span>
         </el-dialog>
+
+        <el-dialog
+            title="分配角色"
+            :visible.sync="roleDlgVis"
+            width="50%"
+            @close="allotRoleDlgClose">
+        <p>当前用户：{{allotUserInfo.username}}</p>
+        <p>当前角色：{{allotUserInfo.role_name}}</p>
+        <p>分配新角色</p>
+        <el-select v-model="selectedRoleId" placeholder="请选择">
+            <el-option
+                    v-for="item in roleList"
+                    :key="item.id"
+                    :label="item.roleName"
+                    :value="item.id">
+            </el-option>
+        </el-select>
+        <span slot="footer" class="dialog-footer">
+            <el-button @click="roleDlgVis = false">取 消</el-button>
+            <el-button type="primary" @click="allotRole">确 定</el-button>
+            </span>
+    </el-dialog>
     </div>
 </template>
 
@@ -170,7 +192,11 @@
                     username: null,
                     email: null,
                     mobile: null
-                }
+                },
+                roleDlgVis: false,
+                allotUserInfo: {},
+                roleList: [],
+                selectedRoleId: null
             }
         },
         methods: {
@@ -257,6 +283,32 @@
                         this.queryInfo.pagenum = 0;
                 }
                 this.getUserList();
+            },
+            async openAllotRoleDlg(allotUserInfo) {
+                this.allotUserInfo = allotUserInfo;
+                this.roleDlgVis = true;
+                const  {data: res} = await this.$http.get('roles');
+                if (res.meta.status !== 200) {
+                    return this.$message.error(res.meta.msg);
+                }
+                this.roleList = res.data;
+            },
+            async allotRole() {
+                if (!this.selectedRoleId) {
+                    return this.$message.error('请选择当前用户要分配的角色!');
+                }
+
+                const {data: res} = await this.$http.put(`users/${this.allotUserInfo.id}/role`, {rid: this.selectedRoleId});
+                if (res.meta.status !== 200) {
+                    return this.$message.error(res.meta.msg);
+                }
+                this.getUserList();
+                this.$message.success(res.meta.msg);
+                this.roleDlgVis = false;
+            },
+            allotRoleDlgClose() {
+                this.allotUserInfo = {};
+                this.selectedRoleId = '';
             }
         },
         mounted() {
@@ -281,7 +333,6 @@
         }
 
         .el-table {
-            margin-top: 15px;
             font-size: 12px;
         }
 
